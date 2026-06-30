@@ -1,19 +1,22 @@
 from openpyxl import load_workbook
 
+def read_requirements(file):
 
-def read_requirements(file_path):
-
-    workbook = load_workbook(file_path)
-
-    sheet = workbook["Requirements"]
+    workbook = load_workbook(file)
+    sheet = workbook.active
 
     requirements = []
+    skipped_rows = 0
 
+    # Skip header row
     for row in sheet.iter_rows(min_row=2, values_only=True):
 
         requirement = row[0]
 
-        if requirement is not None and str(requirement).strip() != "":
-            requirements.append(requirement)
+        if requirement is None or str(requirement).strip() == "":
+            skipped_rows += 1
+            continue
 
-    return requirements
+        requirements.append(str(requirement).strip())
+
+    return requirements, skipped_rows

@@ -1,71 +1,72 @@
 from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
 
 
-def create_sheet(workbook, sheet_name, header, items):
-
-    sheet = workbook.create_sheet(title=sheet_name)
-
-    sheet["A1"] = "ID"
-    sheet["B1"] = header
-
-    row = 2
-
-    for item in items:
-
-        sheet.cell(row=row, column=1, value=row - 1)
-        sheet.cell(row=row, column=2, value=item)
-
-        row += 1
-
-
-def export_test_artifacts(data):
+def export_to_excel(results, file_path):
 
     workbook = Workbook()
 
-    workbook.remove(workbook.active)
+    sheet = workbook.active
+    sheet.title = "QA Artifacts"
 
-    create_sheet(
-        workbook,
+    headers = [
+        "Requirement",
         "BA Questions",
-        "Question",
-        data["ba_questions"]
-    )
-
-    create_sheet(
-        workbook,
         "Test Scenarios",
-        "Scenario",
-        data["test_scenarios"]
-    )
+        "Positive Test Cases",
+        "Negative Test Cases",
+        "Boundary Test Cases",
+        "Risks"
+    ]
 
-    create_sheet(
-        workbook,
-        "Positive Tests",
-        "Test Case",
-        data["positive_test_cases"]
-    )
+    # Header Style
+    header_fill = PatternFill(start_color="4F81BD",
+                              end_color="4F81BD",
+                              fill_type="solid")
 
-    create_sheet(
-        workbook,
-        "Negative Tests",
-        "Test Case",
-        data["negative_test_cases"]
-    )
+    header_font = Font(bold=True, color="FFFFFF")
 
-    create_sheet(
-        workbook,
-        "Boundary Tests",
-        "Test Case",
-        data["boundary_test_cases"]
-    )
+    # Write Headers
+    for col_num, header in enumerate(headers, start=1):
 
-    create_sheet(
-        workbook,
-        "Risks",
-        "Risk",
-        data["risks"]
-    )
+        cell = sheet.cell(row=1, column=col_num)
 
-    workbook.save("QA_Test_Artifacts.xlsx")
+        cell.value = header
+        cell.fill = header_fill
+        cell.font = header_font
 
-    print("Excel workbook created successfully!")
+    # Write Data
+    row_num = 2
+
+    for result in results:
+
+        sheet.cell(row=row_num, column=1).value = result["requirement"]
+
+        sheet.cell(row=row_num, column=2).value = "\n".join(result["ba_questions"])
+
+        sheet.cell(row=row_num, column=3).value = "\n".join(result["test_scenarios"])
+
+        sheet.cell(row=row_num, column=4).value = "\n".join(
+            tc["description"] for tc in result["positive_test_cases"]
+        )
+
+        sheet.cell(row=row_num, column=5).value = "\n".join(
+            tc["description"] for tc in result["negative_test_cases"]
+        )
+
+        sheet.cell(row=row_num, column=6).value = "\n".join(
+            tc["description"] for tc in result["boundary_test_cases"]
+        )
+
+        sheet.cell(row=row_num, column=7).value = "\n".join(result["risks"])
+
+        # Wrap text for all cells
+        for col in range(1, 8):
+
+            sheet.cell(row=row_num,
+                       column=col).alignment = Alignment(wrap_text=True,
+                                                         vertical="top")
+
+        row_num += 1
+
+    workbook.save(file_path)
