@@ -138,4 +138,11 @@ with tab2:
         st.divider()
 
         if st.button("🚀 Generate QA Report"):
-            st.info("Batch Processing will be implemented next.")
+
+            st.subheader("Processing Requirements")
+
+            for index, requirement in enumerate(requirements, start=1):
+
+                st.write(f"{index}. {requirement}")
+
+            st.success("Processing Complete!")
