@@ -42,30 +42,54 @@ def export_to_excel(results, file_path):
 
         sheet.cell(row=row_num, column=1).value = result["requirement"]
 
-        sheet.cell(row=row_num, column=2).value = "\n".join(result["ba_questions"])
+        if result["status"] == "Failed":
 
-        sheet.cell(row=row_num, column=3).value = "\n".join(result["test_scenarios"])
+            sheet.cell(row=row_num, column=2).value = "Generation Failed"
+            sheet.cell(row=row_num, column=3).value = result["error"]
 
-        sheet.cell(row=row_num, column=4).value = "\n".join(
-            tc["description"] for tc in result["positive_test_cases"]
-        )
+        else:
 
-        sheet.cell(row=row_num, column=5).value = "\n".join(
-            tc["description"] for tc in result["negative_test_cases"]
-        )
+            data = result["data"]
 
-        sheet.cell(row=row_num, column=6).value = "\n".join(
-            tc["description"] for tc in result["boundary_test_cases"]
-        )
+            sheet.cell(row=row_num, column=2).value = "\n".join(
+                f"{q['id']} - {q['question']}"
+                for q in data["ba_questions"]
+            )
 
-        sheet.cell(row=row_num, column=7).value = "\n".join(result["risks"])
+            sheet.cell(row=row_num, column=3).value = "\n".join(
+                f"{s['id']} - {s['description']}"
+                for s in data["test_scenarios"]
+            )
 
-        # Wrap text for all cells
+            sheet.cell(row=row_num, column=4).value = "\n".join(
+                f"{tc['id']} - {tc['description']}"
+                for tc in data["positive_test_cases"]
+            )
+
+            sheet.cell(row=row_num, column=5).value = "\n".join(
+                f"{tc['id']} - {tc['description']}"
+                for tc in data["negative_test_cases"]
+            )
+
+            sheet.cell(row=row_num, column=6).value = "\n".join(
+                f"{tc['id']} - {tc['description']}"
+                for tc in data["boundary_test_cases"]
+            )
+
+            sheet.cell(row=row_num, column=7).value = "\n".join(
+                f"{r['id']} - {r['description']}"
+                for r in data["risks"]
+            )
+
         for col in range(1, 8):
 
-            sheet.cell(row=row_num,
-                       column=col).alignment = Alignment(wrap_text=True,
-                                                         vertical="top")
+            sheet.cell(
+                row=row_num,
+                column=col
+            ).alignment = Alignment(
+                wrap_text=True,
+                vertical="top"
+            )
 
         row_num += 1
 
