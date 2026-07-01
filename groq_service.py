@@ -5,7 +5,14 @@ from config import GROQ_API_KEY
 from utils import parse_llm_response
 
 
-client = Groq(api_key=GROQ_API_KEY)
+#client = Groq(api_key=GROQ_API_KEY)
+
+import streamlit as st
+from groq import Groq
+
+client = Groq(
+    api_key=st.secrets["GROQ_API_KEY"]
+)
 
 
 def ask_groq(prompt):

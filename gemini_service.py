@@ -5,7 +5,14 @@ import json
 import ast
 from utils import parse_llm_response
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+#client = genai.Client(api_key=GEMINI_API_KEY)
+
+import streamlit as st
+from google import genai
+
+client = genai.Client(
+    api_key=st.secrets["GEMINI_API_KEY"]
+)
 
 
 def ask_gemini(prompt):
