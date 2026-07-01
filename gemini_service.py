@@ -3,12 +3,13 @@ from google.genai.errors import ServerError
 from config import GEMINI_API_KEY
 import json
 import ast
+from utils import parse_llm_response
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 def ask_gemini(prompt):
-        
+
     try:
 
         response = client.models.generate_content(
@@ -16,18 +17,9 @@ def ask_gemini(prompt):
             contents=prompt
         )
 
-        try:
-            qa_data = json.loads(response_text)
-            return True, qa_data
+        response_text = response.text.strip()
 
-        except json.JSONDecodeError:
-            try:
-                # Fallback: parse Python dictionary string
-                qa_data = ast.literal_eval(response_text)
-                return True, qa_data
-
-            except Exception:
-                return False, f"Invalid JSON returned by Gemini.\n\n{response_text}"
+        return parse_llm_response(response_text)
 
     except ServerError:
         return False, "ERROR: Gemini server is currently busy. Please try again later."

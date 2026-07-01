@@ -1,96 +1,302 @@
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 
+
+# -----------------------------
+# Common Sheet Styling
+# -----------------------------
+def style_sheet(sheet):
+
+    header_fill = PatternFill(
+        fill_type="solid",
+        start_color="4F81BD",
+        end_color="4F81BD"
+    )
+
+    header_font = Font(
+        bold=True,
+        color="FFFFFF"
+    )
+
+    for cell in sheet[1]:
+
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center",
+            wrap_text=True
+        )
+
+    sheet.freeze_panes = "A2"
+
+    sheet.auto_filter.ref = sheet.dimensions
+
+
+def auto_fit(sheet):
+
+    for column in sheet.columns:
+
+        length = 0
+
+        column_letter = get_column_letter(column[0].column)
+
+        for cell in column:
+
+            if cell.value:
+
+                length = max(
+                    length,
+                    len(str(cell.value))
+                )
+
+            cell.alignment = Alignment(
+                wrap_text=True,
+                vertical="top"
+            )
+
+        sheet.column_dimensions[column_letter].width = min(length + 4, 50)
+
+def create_summary_sheet(workbook, results):
+
+    sheet = workbook.active
+
+    sheet.title = "Summary"
+
+    sheet.append([
+        "Requirement",
+        "Status"
+    ])
+
+    for result in results:
+
+        sheet.append([
+            result["requirement"],
+            result["status"]
+        ])
+
+    style_sheet(sheet)
+
+    auto_fit(sheet)
 
 def export_to_excel(results, file_path):
 
     workbook = Workbook()
 
-    sheet = workbook.active
-    sheet.title = "QA Artifacts"
+    create_summary_sheet(workbook, results)
 
-    headers = [
+    create_ba_questions_sheet(workbook, results)
+
+    create_test_scenarios_sheet(workbook, results)
+
+    create_positive_test_cases_sheet(workbook, results)
+
+    create_negative_test_cases_sheet(workbook, results)
+
+    create_boundary_test_cases_sheet(workbook, results)
+
+    create_risks_sheet(workbook, results)
+
+    workbook.save(file_path)
+
+def create_ba_questions_sheet(workbook, results):
+
+    sheet = workbook.create_sheet("BA Questions")
+
+    sheet.append([
         "Requirement",
-        "BA Questions",
-        "Test Scenarios",
-        "Positive Test Cases",
-        "Negative Test Cases",
-        "Boundary Test Cases",
-        "Risks"
-    ]
-
-    # Header Style
-    header_fill = PatternFill(start_color="4F81BD",
-                              end_color="4F81BD",
-                              fill_type="solid")
-
-    header_font = Font(bold=True, color="FFFFFF")
-
-    # Write Headers
-    for col_num, header in enumerate(headers, start=1):
-
-        cell = sheet.cell(row=1, column=col_num)
-
-        cell.value = header
-        cell.fill = header_fill
-        cell.font = header_font
-
-    # Write Data
-    row_num = 2
+        "BA Question ID",
+        "Question"
+    ])
 
     for result in results:
 
-        sheet.cell(row=row_num, column=1).value = result["requirement"]
+        if result["status"] == "Failed":
+            continue
+
+        data = result["data"]
+
+        for question in data["ba_questions"]:
+
+            sheet.append([
+                result["requirement"],
+                question["id"],
+                question["question"]
+            ])
+
+    style_sheet(sheet)
+
+    auto_fit(sheet)
+
+def create_test_scenarios_sheet(workbook, results):
+
+    sheet = workbook.create_sheet("Test Scenarios")
+
+    sheet.append([
+        "Requirement",
+        "Scenario ID",
+        "Description"
+    ])
+
+    for result in results:
 
         if result["status"] == "Failed":
+            continue
 
-            sheet.cell(row=row_num, column=2).value = "Generation Failed"
-            sheet.cell(row=row_num, column=3).value = result["error"]
+        data = result["data"]
 
-        else:
+        for scenario in data["test_scenarios"]:
 
-            data = result["data"]
+            sheet.append([
+                result["requirement"],
+                scenario["id"],
+                scenario["description"]
+            ])
 
-            sheet.cell(row=row_num, column=2).value = "\n".join(
-                f"{q['id']} - {q['question']}"
-                for q in data["ba_questions"]
+    style_sheet(sheet)
+
+    auto_fit(sheet)
+
+def create_positive_test_cases_sheet(workbook, results):
+
+    sheet = workbook.create_sheet("Positive Test Cases")
+
+    sheet.append([
+        "Requirement",
+        "Test Case ID",
+        "Description",
+        "Steps",
+        "Expected Result"
+    ])
+
+    for result in results:
+
+        if result["status"] == "Failed":
+            continue
+
+        data = result["data"]
+
+        for tc in data["positive_test_cases"]:
+
+            steps = "\n".join(
+                f"{i+1}. {step}"
+                for i, step in enumerate(tc["steps"])
             )
 
-            sheet.cell(row=row_num, column=3).value = "\n".join(
-                f"{s['id']} - {s['description']}"
-                for s in data["test_scenarios"]
+            sheet.append([
+                result["requirement"],
+                tc["id"],
+                tc["description"],
+                steps,
+                tc["expected_result"]
+            ])
+
+    style_sheet(sheet)
+
+    auto_fit(sheet)
+
+def create_negative_test_cases_sheet(workbook, results):
+
+    sheet = workbook.create_sheet("Negative Test Cases")
+
+    sheet.append([
+        "Requirement",
+        "Test Case ID",
+        "Description",
+        "Steps",
+        "Expected Result"
+    ])
+
+    for result in results:
+
+        if result["status"] == "Failed":
+            continue
+
+        data = result["data"]
+
+        for tc in data["negative_test_cases"]:
+
+            steps = "\n".join(
+                f"{i+1}. {step}"
+                for i, step in enumerate(tc["steps"])
             )
 
-            sheet.cell(row=row_num, column=4).value = "\n".join(
-                f"{tc['id']} - {tc['description']}"
-                for tc in data["positive_test_cases"]
+            sheet.append([
+                result["requirement"],
+                tc["id"],
+                tc["description"],
+                steps,
+                tc["expected_result"]
+            ])
+
+    style_sheet(sheet)
+
+    auto_fit(sheet)
+
+def create_boundary_test_cases_sheet(workbook, results):
+
+    sheet = workbook.create_sheet("Boundary Test Cases")
+
+    sheet.append([
+        "Requirement",
+        "Test Case ID",
+        "Description",
+        "Steps",
+        "Expected Result"
+    ])
+
+    for result in results:
+
+        if result["status"] == "Failed":
+            continue
+
+        data = result["data"]
+
+        for tc in data["boundary_test_cases"]:
+
+            steps = "\n".join(
+                f"{i+1}. {step}"
+                for i, step in enumerate(tc["steps"])
             )
 
-            sheet.cell(row=row_num, column=5).value = "\n".join(
-                f"{tc['id']} - {tc['description']}"
-                for tc in data["negative_test_cases"]
-            )
+            sheet.append([
+                result["requirement"],
+                tc["id"],
+                tc["description"],
+                steps,
+                tc["expected_result"]
+            ])
 
-            sheet.cell(row=row_num, column=6).value = "\n".join(
-                f"{tc['id']} - {tc['description']}"
-                for tc in data["boundary_test_cases"]
-            )
+    style_sheet(sheet)
 
-            sheet.cell(row=row_num, column=7).value = "\n".join(
-                f"{r['id']} - {r['description']}"
-                for r in data["risks"]
-            )
+    auto_fit(sheet)
 
-        for col in range(1, 8):
+def create_risks_sheet(workbook, results):
 
-            sheet.cell(
-                row=row_num,
-                column=col
-            ).alignment = Alignment(
-                wrap_text=True,
-                vertical="top"
-            )
+    sheet = workbook.create_sheet("Risks")
 
-        row_num += 1
+    sheet.append([
+        "Requirement",
+        "Risk ID",
+        "Description"
+    ])
 
-    workbook.save(file_path)
+    for result in results:
+
+        if result["status"] == "Failed":
+            continue
+
+        data = result["data"]
+
+        for risk in data["risks"]:
+
+            sheet.append([
+                result["requirement"],
+                risk["id"],
+                risk["description"]
+            ])
+
+    style_sheet(sheet)
+
+    auto_fit(sheet)  

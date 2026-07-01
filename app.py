@@ -141,6 +141,36 @@ with tab1:
                     for i, risk in enumerate(data["risks"], start=1):
                         st.write(f"{i}. {risk['id']} - {risk['description']}")
 
+                    # Prepare data in the same format as batch processing
+                    results = [
+                        {
+                            "requirement": requirement,
+                            "status": "Success",
+                            "error": None,
+                            "data": data
+                        }
+                    ]
+
+                    output_file = "output/Single_QA_Report.xlsx"
+
+                    
+                    #export_to_excel(results, output_file)
+
+                    import excel_exporter
+
+                    excel_exporter.export_to_excel(results, output_file)
+
+                
+
+                    with open(output_file, "rb") as file:
+
+                        st.download_button(
+                            label="⬇ Download Excel Report",
+                            data=file,
+                            file_name="Single_QA_Report.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+
                 
 
                 except Exception as e:
@@ -153,6 +183,14 @@ with tab1:
 # =====================================================
 
 with tab2:
+
+    # ----------------------------
+    # Session State
+    # ----------------------------
+  
+
+    if "batch_running" not in st.session_state:
+        st.session_state.batch_running = False
 
     st.subheader("📂 Batch Processing")
 
@@ -167,7 +205,9 @@ with tab2:
 
         st.success("File uploaded successfully!")
 
-        # Summary Cards
+        # ----------------------------
+        # Summary
+        # ----------------------------
         col1, col2 = st.columns(2)
 
         with col1:
@@ -190,10 +230,33 @@ with tab2:
 
         st.divider()
 
-        if st.button("🚀 Generate QA Report"):
+        # ----------------------------
+        # Buttons
+        # ----------------------------
+        button_label = (
+            "⏳ Generating..."
+            if st.session_state.batch_running
+            else "🚀 Generate QA Report"
+        )
+
+        col1, col2 = st.columns([3, 1])
+
+        with col1:
+            generate = st.button(
+                button_label,
+                disabled=st.session_state.batch_running
+            )
+
+
+
+        # ----------------------------
+        # Batch Processing
+        # ----------------------------
+        if generate:
+
+            st.session_state.batch_running = True
 
             progress_bar = st.progress(0)
-
             status_text = st.empty()
 
             results = []
@@ -202,10 +265,9 @@ with tab2:
 
             for index, requirement in enumerate(requirements, start=1):
 
-                
 
                 status_text.info(
-                    f"Processing {index}/{total}\n\nCurrent Requirement: {requirement}"
+                    f"Processing {index}/{total}\n\nCurrent Requirement:\n{requirement}"
                 )
 
                 prompt = get_qa_prompt(requirement)
@@ -236,19 +298,36 @@ with tab2:
 
                 progress_bar.progress(index / total)
 
-            status_text.success("Batch Processing Complete!")
+                status_text.success("✅ Batch Processing Complete!")
 
-            output_file = "output/QA_Report.xlsx"
+                st.session_state.batch_running = False
 
-            export_to_excel(results, output_file)
 
-            st.success("✅ QA Report generated successfully!")
+            # ----------------------------
+            # Generate Excel
+            # ----------------------------
 
-            with open(output_file, "rb") as file:
+            if len(results) > 0:
 
-                st.download_button(
-                    label="⬇ Download QA Report",
-                    data=file,
-                    file_name="QA_Report.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                output_file = "output/QA_Report.xlsx"
+
+            
+
+                #export_to_excel(results, output_file)
+
+                import excel_exporter
+
+                excel_exporter.export_to_excel(results, output_file)
+
+                st.success("✅ QA Report generated successfully!")
+
+                with open(output_file, "rb") as file:
+
+                    st.download_button(
+                        label="⬇ Download QA Report",
+                        data=file,
+                        file_name="QA_Report.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+
+                    
