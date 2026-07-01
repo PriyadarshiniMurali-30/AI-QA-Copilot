@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 
+
 from llm_service import ask_llm
 from excel_reader import read_requirements
 from prompts import get_qa_prompt
@@ -151,14 +152,11 @@ with tab1:
                         }
                     ]
 
-                    output_file = "output/Single_QA_Report.xlsx"
+                    output_file = "Single_QA_Report.xlsx"
 
                     
-                    #export_to_excel(results, output_file)
 
-                    import excel_exporter
-
-                    excel_exporter.export_to_excel(results, output_file)
+                    export_to_excel(results, output_file)
 
                 
 
@@ -309,15 +307,10 @@ with tab2:
 
             if len(results) > 0:
 
-                output_file = "output/QA_Report.xlsx"
+                output_file = "QA_Report.xlsx"
 
-            
-
-                #export_to_excel(results, output_file)
-
-                import excel_exporter
-
-                excel_exporter.export_to_excel(results, output_file)
+        
+                export_to_excel(results, output_file)
 
                 st.success("✅ QA Report generated successfully!")
 
