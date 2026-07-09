@@ -106,7 +106,7 @@ AI-QA-Copilot/
 ### Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/AI-QA-Copilot.git
+git clone https://github.com/PriyadarshiniMurali-30/AI-QA-Copilot.git
 cd AI-QA-Copilot
 ```
 
