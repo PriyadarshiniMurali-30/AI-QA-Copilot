@@ -24,3 +24,7 @@ logs/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Output files
+QA_Report.xlsx
+Single_QA_Report.xlsx
